@@ -90,7 +90,7 @@ def view_as_real(data):
 
     return torch.view_as_real(data)
 
-
+import os.path
 def fft2(
     data: torch.Tensor,
     dim: Tuple[int, ...] = (1, 2),
@@ -119,6 +119,10 @@ def fft2(
     -------
     torch.Tensor: the fft of the data.
     """
+    # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    # if not os.path.isfile('ref/fft2_inp.npy'): 
+    #     np.save('ref/fft2_inp.npy', data)
+
     if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
         raise TypeError(
             f"Currently fft2 does not support negative indexing. "
@@ -144,6 +148,9 @@ def fft2(
         data = fftshift(data, dim=dim)
 
     data = view_as_real(data)
+
+    # if not os.path.isfile('ref/fft2_res.npy'): 
+    #     np.save('ref/fft2_res.npy', data)
     return data
 
 
@@ -175,6 +182,10 @@ def ifft2(
     -------
     torch.Tensor: the ifft of the data.
     """
+    # print('0000000000000000000000000')
+    # if not os.path.isfile('ref/ifft2_inp.npy'): 
+    #     np.save('ref/ifft2_inp.npy', data)
+
     if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
         raise TypeError(
             f"Currently ifft2 does not support negative indexing. "
@@ -199,6 +210,9 @@ def ifft2(
         data = fftshift(data, dim=dim)
 
     data = view_as_real(data)
+
+    # if not os.path.isfile('ref/ifft2_res.npy'): 
+    #     np.save('ref/ifft2_res.npy', data)
     return data
 
 
