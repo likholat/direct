@@ -16,6 +16,29 @@ from direct.data.bbox import crop_to_bbox
 from direct.utils import ensure_list, is_power_of_two
 from direct.utils.asserts import assert_complex, assert_same_shape
 
+class FFT2(torch.autograd.Function):
+        @staticmethod
+        def symbolic(g, x, inverse):
+            return g.op('FFT', x,
+                        inverse_i=inverse)
+
+        @staticmethod
+        def forward(self, x, inverse):
+            dim = (2, 3)
+            normalized=True
+
+            data = view_as_complex(x)
+            if verify_fft_dtype_possible(data, dim):
+                data = torch.fft.fftn(
+                    data,
+                    dim=dim,
+                    norm="ortho" if normalized else None,
+                )
+            else:
+                raise ValueError("Currently half precision FFT is not supported.")
+
+            data = view_as_real(data)
+            return x
 
 def to_tensor(data: np.ndarray) -> torch.Tensor:
     """
