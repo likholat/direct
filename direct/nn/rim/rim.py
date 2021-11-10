@@ -123,15 +123,19 @@ class ConvGRUCell(nn.Module):
                 conv_skip.append(cell_input)
 
             stacked_inputs = torch.cat([cell_input, previous_state[:, :, :, :, idx]], dim=1)
-
+            
             update = torch.sigmoid(self.update_gates[idx](stacked_inputs))
             reset = torch.sigmoid(self.reset_gates[idx](stacked_inputs))
             delta = torch.tanh(
                 self.out_gates[idx](torch.cat([cell_input, previous_state[:, :, :, :, idx] * reset], dim=1))
             )
             cell_input = previous_state[:, :, :, :, idx] * (1 - update) + delta * update
+            
             new_states.append(cell_input)
+
             cell_input = F.relu(cell_input, inplace=False)
+
+            
         if len(conv_skip) > 0:
             out = self.conv_blocks[self.depth](torch.cat([*conv_skip[-self.dense_connect :], cell_input], dim=1))
         else:
@@ -475,12 +479,15 @@ class RIM(nn.Module):
             (0, 4, 1, 2, 3) if input_image.ndim == 5 else (0, 3, 1, 2)
         ).contiguous()  # shape (batch, , complex=2, [slice,] height, width)
 
+
         batch_size = input_image.size(0)
         spatial_shape = (
             [input_image.size(-3), input_image.size(-2), input_image.size(-1)]
             if input_image.ndim == 5
             else [input_image.size(-2), input_image.size(-1)]
         )
+
+        
 
         # Initialize zero state for RIM
         state_size = [batch_size, self.hidden_channels] + list(spatial_shape) + [self.depth]
@@ -508,20 +515,25 @@ class RIM(nn.Module):
                     f"Might cause difficulties."
                 )
 
+            
+
             cell_input = torch.cat(
                 [intermediate_image, grad_loglikelihood],
                 dim=1,
             )  # shape (batch, , complex=4, [slice,] height, width)
 
+
+
             cell_output, previous_state = cell(cell_input, previous_state)
             # shapes (batch, complex=2, [slice,] height, width), (batch, hidden_channels, [slice,] height, width, depth)
+
 
             if self.skip_connections:
                 # shape (batch, complex=2, [slice,] height, width)
                 intermediate_image = intermediate_image + cell_output
             else:
                 # shape (batch, complex=2, [slice,] height, width)
-                intermediate_image = cell_output
+                intermediate_image = cell_output 
 
             if not self.training:
                 # If not training, memory can be significantly reduced by clearing the previous cell.

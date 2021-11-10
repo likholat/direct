@@ -1,11 +1,19 @@
 import torch
-print(torch.__version__)
+import numpy as np
+
 import torch.onnx
-from direct.data.transforms import *
+
+# from direct.data.transforms import *
+# print(torch.__version__)
+# data = np.random.standard_normal((1, 2, 10, 10, 2))
+# data = torch.tensor(data)
+# res = torch.fft(data, 2)
+
+
+# exit(1)
 from direct.data.tests.test_transforms import *
 from omegaconf import OmegaConf
 from direct.environment import *
-import numpy as np
 
 cfg_from_file = OmegaConf.load('/home/alikholat/projects/direct/projects/calgary_campinas/baseline_model/config.yaml')
 models, models_config = load_models_into_environment_config(cfg_from_file)
@@ -32,26 +40,48 @@ loglikelihood_scaling = torch.tensor([0.2])
 #                masked_kspace=masked_kspace, 
 #                sampling_mask=sampling_mask, 
 #                sensitivity_map=sensitivity_map,
-#                previous_state=previous_state,
+#               #  previous_state=previous_state,
 #                loglikelihood_scaling=loglikelihood_scaling
 #               )
-# # np.save('ref/input_image.npy', input_image)
-# # np.save('ref/sensitivity_map.npy', sensitivity_map)
-# # np.save('ref/masked_kspace.npy', masked_kspace)
-# # np.save('ref/sampling_mask.npy', sampling_mask)
-# # np.save('ref/previous_state.npy', previous_state)
-# # np.save('ref/loglikelihood_scaling.npy', loglikelihood_scaling)
-# # np.save('ref/ref_res.npy', output)
+# print("OUTPUT", output)
+# # # np.save('ref/input_image.npy', input_image)
+# # # np.save('ref/sensitivity_map.npy', sensitivity_map)
+# # # np.save('ref/masked_kspace.npy', masked_kspace)
+# # # np.save('ref/sampling_mask.npy', sampling_mask)
+# # # np.save('ref/previous_state.npy', previous_state)
+# # # np.save('ref/loglikelihood_scaling.npy', loglikelihood_scaling)
+# # # np.save('ref/ref_res.npy', output)
 # if output:
 #     print("Input is valid!")
 
 
-# torch.onnx.export(model, (input_image, masked_kspace, sampling_mask, 
-#                           sensitivity_map, previous_state, loglikelihood_scaling),
+origin_forward = model.forward
+input_map = {'input_image':input_image, 'masked_kspace':masked_kspace, 'sampling_mask':sampling_mask, 
+                          'sensitivity_map':sensitivity_map, 'loglikelihood_scaling':loglikelihood_scaling}
+model.forward = lambda x: origin_forward(input_image, 
+               masked_kspace=masked_kspace, 
+               sampling_mask=sampling_mask, 
+               sensitivity_map=sensitivity_map,
+              #  previous_state=previous_state,
+               loglikelihood_scaling=loglikelihood_scaling
+              )
+torch.onnx.export(model, input_map,
+                         'model.onnx',
+                          opset_version=11,
+                          operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN
+                )
+
+# torch.onnx.export(model, (input_image, 
+#                           masked_kspace, 
+#                           sampling_mask, 
+#                           sensitivity_map,
+#                           previous_state,
+#                           loglikelihood_scaling),
 #                          'model.onnx',
 #                           opset_version=11,
-#                           operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN_FALLBACK
+#                           operator_export_type=torch.onnx.OperatorExportTypes.ONNX_ATEN
 #                 )
+
 
 # converted_model = inp_dict = torch.load('/home/alikholat/projects/direct/model.onnx')
 # if converted_model:

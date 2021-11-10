@@ -9,7 +9,7 @@ from typing import Callable, List, Optional, Tuple, Union
 
 import numpy as np
 import torch
-import torch.fft
+# import torch.fft
 from packaging import version
 
 from direct.data.bbox import crop_to_bbox
@@ -19,26 +19,12 @@ from direct.utils.asserts import assert_complex, assert_same_shape
 class FFT2(torch.autograd.Function):
         @staticmethod
         def symbolic(g, x, inverse):
-            return g.op('FFT', x,
-                        inverse_i=inverse)
+            return g.op('FFT', x)
 
         @staticmethod
         def forward(self, x, inverse):
-            dim = (2, 3)
-            normalized=True
+            return  torch.fft(x, 2)
 
-            data = view_as_complex(x)
-            if verify_fft_dtype_possible(data, dim):
-                data = torch.fft.fftn(
-                    data,
-                    dim=dim,
-                    norm="ortho" if normalized else None,
-                )
-            else:
-                raise ValueError("Currently half precision FFT is not supported.")
-
-            data = view_as_real(data)
-            return x
 
 def to_tensor(data: np.ndarray) -> torch.Tensor:
     """
@@ -142,38 +128,46 @@ def fft2(
     -------
     torch.Tensor: the fft of the data.
     """
-    # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
-    # if not os.path.isfile('ref/fft2_inp.npy'): 
-    #     np.save('ref/fft2_inp.npy', data)
+    # # print('!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!')
+    # # if not os.path.isfile('ref/fft2_inp.npy'): 
+    # #     np.save('ref/fft2_inp.npy', data)
 
-    if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
-        raise TypeError(
-            f"Currently fft2 does not support negative indexing. "
-            f"Dim should contain only positive integers. Got {dim}."
-        )
+    # if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
+    #     raise TypeError(
+    #         f"Currently fft2 does not support negative indexing. "
+    #         f"Dim should contain only positive integers. Got {dim}."
+    #     )
 
-    assert_complex(data, complex_last=True)
+    # assert_complex(data, complex_last=True)
 
-    data = view_as_complex(data)
-    if centered:
-        data = ifftshift(data, dim=dim)
-    # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
-    if verify_fft_dtype_possible(data, dim):
-        data = torch.fft.fftn(
-            data,
-            dim=dim,
-            norm="ortho" if normalized else None,
-        )
-    else:
-        raise ValueError("Currently half precision FFT is not supported.")
+    # data = view_as_complex(data)
+    # if centered:
+    #     data = ifftshift(data, dim=dim)
+    # # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
+    # if verify_fft_dtype_possible(data, dim):
+    #     data = torch.fft.fftn(
+    #         data,
+    #         dim=dim,
+    #         norm="ortho" if normalized else None,
+    #     )
+    # else:
+    #     raise ValueError("Currently half precision FFT is not supported.")
 
-    if centered:
-        data = fftshift(data, dim=dim)
+    # if centered:
+    #     data = fftshift(data, dim=dim)
 
-    data = view_as_real(data)
+    # data = view_as_real(data)
+
+
+    # data_complex = data[:,:,:,:,1]
+    # data_complex = torch.fft.fftn(data_complex)
+    # data[:,:,:,:,1] = data_complex
 
     # if not os.path.isfile('ref/fft2_res.npy'): 
     #     np.save('ref/fft2_res.npy', data)
+
+    fft = FFT2()
+    data = fft.apply(data, False)
     return data
 
 
@@ -205,37 +199,38 @@ def ifft2(
     -------
     torch.Tensor: the ifft of the data.
     """
-    # print('0000000000000000000000000')
-    # if not os.path.isfile('ref/ifft2_inp.npy'): 
-    #     np.save('ref/ifft2_inp.npy', data)
+    # print('111111111111111111111111111111111111111111111111')
+    # # if not os.path.isfile('ref/ifft2_inp.npy'): 
+    # #     np.save('ref/ifft2_inp.npy', data)
 
-    if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
-        raise TypeError(
-            f"Currently ifft2 does not support negative indexing. "
-            f"Dim should contain only positive integers. Got {dim}."
-        )
-    assert_complex(data, complex_last=True)
+    # if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
+    #     raise TypeError(
+    #         f"Currently ifft2 does not support negative indexing. "
+    #         f"Dim should contain only positive integers. Got {dim}."
+    #     )
+    # assert_complex(data, complex_last=True)
 
-    data = view_as_complex(data)
-    if centered:
-        data = ifftshift(data, dim=dim)
-    # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
-    if verify_fft_dtype_possible(data, dim):
-        data = torch.fft.ifftn(
-            data,
-            dim=dim,
-            norm="ortho" if normalized else None,
-        )
-    else:
-        raise ValueError("Currently half precision FFT is not supported.")
+    # data = view_as_complex(data)
+    # if centered:
+    #     data = ifftshift(data, dim=dim)
+    # # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
+    # if verify_fft_dtype_possible(data, dim):
+    #     data = torch.fft.ifftn(
+    #         data,
+    #         dim=dim,
+    #         norm="ortho" if normalized else None,
+    #     )
+    # else:
+    #     raise ValueError("Currently half precision FFT is not supported.")
 
-    if centered:
-        data = fftshift(data, dim=dim)
+    # if centered:
+    #     data = fftshift(data, dim=dim)
 
-    data = view_as_real(data)
+    # data = view_as_real(data)
 
-    # if not os.path.isfile('ref/ifft2_res.npy'): 
-    #     np.save('ref/ifft2_res.npy', data)
+    # # if not os.path.isfile('ref/ifft2_res.npy'): 
+    # #     np.save('ref/ifft2_res.npy', data)
+
     return data
 
 
