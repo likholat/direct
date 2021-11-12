@@ -16,6 +16,29 @@ from direct.utils import ensure_list, is_complex_data, is_power_of_two
 from direct.utils.asserts import assert_complex, assert_same_shape
 
 
+class FFT(torch.autograd.Function):
+    @staticmethod
+    def symbolic(g, data, dim, centered, normalized, inverse=False):
+        return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered), inverse_i=int(inverse))
+
+    @staticmethod
+    def forward(self, data, dim, centered, normalized, inverse=False):
+        if inverse:
+            return origin_ifft2(data, dim=dim, centered=centered, normalized=normalized)
+        else:
+            return origin_fft2(data, dim=dim, centered=centered, normalized=normalized)
+
+
+class ComplexMultiplication(torch.autograd.Function):
+    @staticmethod
+    def symbolic(g, input_tensor, other_tensor):
+        return g.op("ComplexMultiplication", input_tensor, other_tensor)
+
+    @staticmethod
+    def forward(self, input_tensor, other_tensor):
+        return origin_complex_multiplication(input_tensor, other_tensor)
+
+
 def to_tensor(data: np.ndarray) -> torch.Tensor:
     """
     Convert numpy array to PyTorch tensor. Complex arrays will have real and imaginary parts on the last axis.
@@ -90,7 +113,7 @@ def view_as_real(data):
     return torch.view_as_real(data)
 
 
-def fft2(
+def origin_fft2(
     data: torch.Tensor,
     dim: Tuple[int, ...] = (1, 2),
     centered: bool = True,
@@ -146,7 +169,16 @@ def fft2(
     return data
 
 
-def ifft2(
+def fft2(
+    data: torch.Tensor,
+    dim: Tuple[int, ...] = (1, 2),
+    centered: bool = True,
+    normalized: bool = True,
+) -> torch.Tensor:
+    return FFT.apply(data, dim, centered, normalized)
+
+
+def origin_ifft2(
     data: torch.Tensor,
     dim: Tuple[int, ...] = (1, 2),
     centered: bool = True,
@@ -199,6 +231,15 @@ def ifft2(
 
     data = view_as_real(data)
     return data
+
+
+def ifft2(
+    data: torch.Tensor,
+    dim: Tuple[int, ...] = (1, 2),
+    centered: bool = True,
+    normalized: bool = True,
+) -> torch.Tensor:
+    return FFT.apply(data, dim, centered, normalized, True)
 
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
@@ -342,6 +383,10 @@ def ifftshift(data: torch.Tensor, dim: Tuple[Union[str, int], ...] = None) -> to
 
 
 def complex_multiplication(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
+    return ComplexMultiplication.apply(input_tensor, other_tensor)
+
+
+def origin_complex_multiplication(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
     """
     Multiplies two complex-valued tensors. Assumes input tensors are complex (last axis has dimension 2).
 
