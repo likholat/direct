@@ -35,7 +35,7 @@ setup(
         ],
     },
     install_requires=[
-        "numpy>=1.20.0",
+        "numpy<1.20.0",
         "h5py>=2.10.0",
         "omegaconf>=2.0.0",
         "torch==1.10.0",
@@ -46,6 +46,8 @@ setup(
         "ismrmrd==1.9.1",
         "tensorboard>=2.5.0",
         "tqdm",
+        "openvino==2021.4.2",
+        "openvino-extensions==2021.4.2.3",
     ],
     extras_require={
         "dev": [
