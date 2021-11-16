@@ -17,14 +17,11 @@ from direct.utils.asserts import assert_complex, assert_same_shape
 
 class FFT(torch.autograd.Function):
     @staticmethod
-    def symbolic(g, data):
-        return g.op('FFT', data)
+    def symbolic(g, data, dim, centered, normalized):
+        return g.op('FFT', data, inverse_i=False)
 
     @staticmethod
-    def forward(self, data):
-        dim = (1, 2)
-        centered = True
-        normalized = True
+    def forward(self, data, dim, centered, normalized):
         if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
             raise TypeError(
                 f"Currently fft2 does not support negative indexing. "
@@ -47,19 +44,19 @@ class FFT(torch.autograd.Function):
             data = fftshift(data, dim=dim)
         data = view_as_real(data)
 
+        import os
+        if os.path.exists('torch_fft.npy'):
+            np.save('torch_fft.npy', data)
+
         return data
 
 class IFFT(torch.autograd.Function):
     @staticmethod
-    def symbolic(g, data):
-        return g.op('FFT', data)
+    def symbolic(g, data, dim, centered, normalized):
+        return g.op('FFT', data, inverse_i=True)
 
     @staticmethod
-    def forward(self, data):
-        dim = (1, 2)
-        centered = True
-        normalized = True
-
+    def forward(self, data, dim, centered, normalized):
         if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
             raise TypeError(
                 f"Currently ifft2 does not support negative indexing. "
@@ -191,7 +188,7 @@ def fft2(
     torch.Tensor: the fft of the data.
     """
 
-    return FFT.apply(data)
+    return FFT.apply(data, dim, centered, normalized)
 
 
 def ifft2(
@@ -223,7 +220,7 @@ def ifft2(
     torch.Tensor: the ifft of the data.
     """
 
-    return IFFT.apply(data)
+    return IFFT.apply(data, dim, centered, normalized)
 
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
