@@ -18,11 +18,11 @@ loglikelihood_scaling = np.load('ref/loglikelihood_scaling.npy')
 previous_state = np.load('ref/previous_state.npy')
 
 inputs = {}
-inputs['0'] = input_image
-inputs['1'] = masked_kspace
+inputs['input_image'] = input_image
+inputs['masked_kspace'] = masked_kspace
 inputs['sampling_mask'] = sampling_mask
-inputs['data.1'] = sensitivity_map 
-inputs['4'] = loglikelihood_scaling
+inputs['sensitivity_map'] = sensitivity_map
+inputs['loglikelihood_scaling'] = loglikelihood_scaling
 
 
 ie = IECore()

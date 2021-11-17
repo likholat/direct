@@ -29,7 +29,6 @@ np.save('ref/input_image.npy', input_image)
 np.save('ref/sensitivity_map.npy', sensitivity_map)
 np.save('ref/masked_kspace.npy', masked_kspace)
 np.save('ref/sampling_mask.npy', sampling_mask)
-np.save('ref/previous_state.npy', previous_state)
 np.save('ref/loglikelihood_scaling.npy', loglikelihood_scaling)
 
 
@@ -45,5 +44,6 @@ model.forward = lambda x: origin_forward(input_image,
 torch.onnx.export(model, input_map,
                          'model.onnx',
                           opset_version=11,
-                          enable_onnx_checker=False
+                          enable_onnx_checker=False,
+                          input_names=['input_image', 'masked_kspace', 'sampling_mask', 'sensitivity_map', 'loglikelihood_scaling']
                 )

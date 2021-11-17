@@ -17,11 +17,11 @@ from direct.utils.asserts import assert_complex, assert_same_shape
 
 class FFT(torch.autograd.Function):
     @staticmethod
-    def symbolic(g, data, dim, centered, normalized):
-        return g.op('FFT', data, inverse_i=False)
+    def symbolic(g, data, dim, centered, normalized, inverse=False):
+        return g.op('FFT', data, inverse_i=inverse)
 
     @staticmethod
-    def forward(self, data, dim, centered, normalized):
+    def forward(self, data, dim, centered, normalized, inverse=False):
         if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
             raise TypeError(
                 f"Currently fft2 does not support negative indexing. "
@@ -33,50 +33,20 @@ class FFT(torch.autograd.Function):
             data = ifftshift(data, dim=dim)
         # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
         if verify_fft_dtype_possible(data, dim):
-            data = torch.fft.fftn(
-                data,
-                dim=dim,
-                norm="ortho" if normalized else None,
-            )
+            if inverse:
+                data = torch.fft.ifftn(
+                    data,
+                    dim=dim,
+                    norm="ortho" if normalized else None,
+                ) 
+            else:
+                data = torch.fft.fftn(
+                    data,
+                    dim=dim,
+                    norm="ortho" if normalized else None,
+                )
         else:
             raise ValueError("Currently half precision FFT is not supported.")
-        if centered:
-            data = fftshift(data, dim=dim)
-        data = view_as_real(data)
-
-        import os
-        if os.path.exists('torch_fft.npy'):
-            np.save('torch_fft.npy', data)
-
-        return data
-
-class IFFT(torch.autograd.Function):
-    @staticmethod
-    def symbolic(g, data, dim, centered, normalized):
-        return g.op('FFT', data, inverse_i=True)
-
-    @staticmethod
-    def forward(self, data, dim, centered, normalized):
-        if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
-            raise TypeError(
-                f"Currently ifft2 does not support negative indexing. "
-                f"Dim should contain only positive integers. Got {dim}."
-            )
-        assert_complex(data, complex_last=True)
-
-        data = view_as_complex(data)
-        if centered:
-            data = ifftshift(data, dim=dim)
-        # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
-        if verify_fft_dtype_possible(data, dim):
-            data = torch.fft.ifftn(
-                data,
-                dim=dim,
-                norm="ortho" if normalized else None,
-            )
-        else:
-            raise ValueError("Currently half precision FFT is not supported.")
-
         if centered:
             data = fftshift(data, dim=dim)
 
@@ -220,7 +190,7 @@ def ifft2(
     torch.Tensor: the ifft of the data.
     """
 
-    return IFFT.apply(data, dim, centered, normalized)
+    return FFT.apply(data, dim, centered, normalized, True)
 
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
