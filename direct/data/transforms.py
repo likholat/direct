@@ -15,10 +15,11 @@ from direct.data.bbox import crop_to_bbox
 from direct.utils import ensure_list, is_power_of_two, is_complex_data
 from direct.utils.asserts import assert_complex, assert_same_shape
 
+
 class FFT(torch.autograd.Function):
     @staticmethod
     def symbolic(g, data, dim, centered, normalized, inverse=False):
-        return g.op('FFT', data, inverse_i=inverse)
+        return g.op("IFFT" if inverse else "FFT", data, inverse_i=(int)(inverse))
 
     @staticmethod
     def forward(self, data, dim, centered, normalized, inverse=False):
@@ -38,7 +39,7 @@ class FFT(torch.autograd.Function):
                     data,
                     dim=dim,
                     norm="ortho" if normalized else None,
-                ) 
+                )
             else:
                 data = torch.fft.fftn(
                     data,

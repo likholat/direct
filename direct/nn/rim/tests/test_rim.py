@@ -1,5 +1,11 @@
 # coding=utf-8
 # Copyright (c) DIRECT Contributors
+from openvino_extensions import get_extensions_path
+from openvino.inference_engine import IECore
+
+import subprocess
+import sys
+import numpy as np
 
 import pytest
 import torch
@@ -18,13 +24,13 @@ def create_input(shape):
 @pytest.mark.parametrize(
     "shape",
     [
-        [3, 3, 16, 16],
+        # [3, 3, 16, 16],
         [2, 5, 16, 32],
     ],
 )
 @pytest.mark.parametrize(
     "hidden_channels",
-    [4, 8],
+    [4], # , 8
 )
 @pytest.mark.parametrize(
     "length",
@@ -32,30 +38,30 @@ def create_input(shape):
 )
 @pytest.mark.parametrize(
     "depth",
-    [1, 2],
+    [1], # , 2
 )
 @pytest.mark.parametrize(
     "no_parameter_sharing",
-    [True, False],
+    [True], # , False
 )
 @pytest.mark.parametrize(
     "instance_norm",
-    [True, False],
+    [True], # , False
 )
 @pytest.mark.parametrize(
     "dense_connect",
-    [True, False],
+    [True], # , False
 )
 @pytest.mark.parametrize(
     "skip_connections",
-    [True, False],
+    [True], # , False
 )
 @pytest.mark.parametrize(
     "image_init",
     [
         "zero-filled",
-        "sense",
-        "input-kspace",
+        # "sense",
+        # "input-kspace",
     ],
 )
 def test_rim(
@@ -88,5 +94,44 @@ def test_rim(
     mask = create_input([shape[0]] + [1] + shape[2:] + [1]).round().int().cpu()
 
     out = model(img, kspace, mask, sens)[0][-1]
+
+    input_map = {'input_image': img,
+                 'masked_kspace': kspace,
+                 'sampling_mask': mask,
+                 'sensitivity_map': sens}
+
+    origin_forward = model.forward
+    model.forward = lambda x: origin_forward(img,
+                    masked_kspace=kspace,
+                    sampling_mask=mask,
+                    sensitivity_map=sens
+                  )
+
+    torch.onnx.export(model, input_map,
+                         'model.onnx',
+                          opset_version=11,
+                          enable_onnx_checker=False,
+                          input_names=['input_image', 'masked_kspace', 'sampling_mask',
+                                       'sensitivity_map']
+    )
+
+    subprocess.run([
+        sys.executable,
+        '-m',
+        'mo',
+        '--input_model=model.onnx',
+        '--extension=' + '/home/alikholat/projects/openvino_pytorch_layers/mo_extensions',
+    ])
+
+    ie = IECore()
+    ie.add_extension(get_extensions_path(), 'CPU')
+    net = ie.read_network('model.xml', 'model.bin')
+    exec_net = ie.load_network(net, 'CPU')
+    ov = exec_net.infer(input_map)
+    ov = list(ov.values())[1]
+
+    print(np.max(np.abs(out.detach().numpy() - ov)))
+
+    assert(np.max(np.abs(out.detach().numpy() - ov)) < 2.5)
 
     assert list(out.shape) == [shape[0]] + [2] + shape[2:]
