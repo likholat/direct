@@ -45,6 +45,8 @@ setup(
         "pyxb==1.2.6",
         "ismrmrd==1.9.1",
         "tensorboard>=2.5.0",
+        "openvino-dev==2021.4.2",
+        "openvino-extensions==2021.4.2",
     ],
     extras_require={
         "dev": [

@@ -8,6 +8,8 @@ import sys
 import numpy as np
 import os
 
+from direct.nn.openvino_model import *
+
 import pytest
 import torch
 
@@ -24,9 +26,11 @@ def create_input(shape):
 
 @pytest.mark.parametrize(
     "shape",
-    [
-        [3, 3, 16, 16],
-        # [2, 5, 16, 32],
+    [   
+        # [1, 1, 3, 3],
+        # [1, 1, 4, 4],
+        # [3, 3, 16, 16],
+        [2, 5, 16, 32],
     ],
 )
 @pytest.mark.parametrize(
@@ -65,6 +69,8 @@ def create_input(shape):
         # "input-kspace",
     ],
 )
+
+
 def test_rim(
     shape,
     hidden_channels,
@@ -96,42 +102,15 @@ def test_rim(
 
     out = model(img, kspace, mask, sens)[0][-1]
 
-    input_map = {"input_image": img, "masked_kspace": kspace, "sampling_mask": mask, "sensitivity_map": sens}
+    ov_model = OpenVINOModel(model)
+    ov_out = ov_model(img, kspace, mask, sens)
 
-    origin_forward = model.forward
-    model.forward = lambda x: origin_forward(img, masked_kspace=kspace, sampling_mask=mask, sensitivity_map=sens)
+    ov_out = list(ov_out.values())[1]
 
-    torch.onnx.export(
-        model,
-        input_map,
-        "model.onnx",
-        opset_version=11,
-        enable_onnx_checker=False,
-        input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
-    )
-
-    dir_path = os.path.dirname(os.path.realpath(__file__))
-    dir_path = dir_path.split("nn")[0]
-
-    subprocess.run(
-        [
-            sys.executable,
-            "-m",
-            "mo",
-            "--input_model=model.onnx",
-            "--extension=" + dir_path + "openvino/mo_extensions",
-        ]
-    )
-
-    ie = IECore()
-    ie.add_extension(get_extensions_path(), "CPU")
-    net = ie.read_network("model.xml", "model.bin")
-    exec_net = ie.load_network(net, "CPU")
-    ov = exec_net.infer(input_map)
-    ov = list(ov.values())[1]
-
-    print(np.max(np.abs(out.detach().numpy() - ov)))
-
-    assert np.max(np.abs(out.detach().numpy() - ov)) < 3
-
+    # print(out.shape)
+    # print(ov_out.shape)
+    # print('Reference range: [{}, {}]'.format(np.min(out.detach().numpy()), np.max(out.detach().numpy())))
+    # print('Out range: [{}, {}]'.format(np.min(ov_out), np.max(ov_out)))
+    # print(np.max(np.abs(out.detach().numpy() - ov_out)))
+    assert np.max(np.abs(out.detach().numpy() - ov_out)) < 1e-5
     assert list(out.shape) == [shape[0]] + [2] + shape[2:]

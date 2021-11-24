@@ -1,0 +1,59 @@
+from openvino_extensions import get_extensions_path
+from openvino.inference_engine import IECore
+
+import torch
+import torch.nn as nn
+
+import subprocess
+import sys
+import os
+
+
+class OpenVINOModel(nn.Module):
+    def __init__(self, model):
+        super().__init__()
+        self.model = model
+
+    def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map, loglikelihood_scaling=None):
+        input_map = {
+            "input_image": input_image,
+            "masked_kspace": masked_kspace,
+            "sampling_mask": sampling_mask,
+            "sensitivity_map": sensitivity_map,
+        }
+
+        origin_forward = self.model.forward
+        self.model.forward = lambda x: origin_forward(
+            input_image, masked_kspace=masked_kspace, sampling_mask=sampling_mask, sensitivity_map=sensitivity_map
+        )
+
+        torch.onnx.export(
+            self.model,
+            input_map,
+            "model.onnx",
+            opset_version=11,
+            enable_onnx_checker=False,
+            input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
+        )
+
+        dirname = os.path.dirname(__file__)
+        # mo_extensions = os.path.join(dirname, 'mo_extensions')
+        mo_extensions = '/home/alikholat/projects/openvino_pytorch_layers/mo_extensions'
+
+        subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "mo",
+                "--input_model=model.onnx",
+                "--extension=" + mo_extensions,
+            ]
+        )
+
+        ie = IECore()
+        # ie.add_extension(get_extensions_path(), "CPU")
+        ie.add_extension('/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so', "CPU")
+        net = ie.read_network("model.xml", "model.bin")        
+        exec_net = ie.load_network(net, "CPU")
+
+        return exec_net.infer(input_map)

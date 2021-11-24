@@ -19,7 +19,7 @@ from direct.utils.asserts import assert_complex, assert_same_shape
 class FFT(torch.autograd.Function):
     @staticmethod
     def symbolic(g, data, dim, centered, normalized, inverse=False):
-        return g.op("IFFT" if inverse else "FFT", data, inverse_i=(int)(inverse))
+        return g.op("IFFT" if inverse else "FFT", data, centered_i=(int)(centered), dim_i = list(dim))
 
     @staticmethod
     def forward(self, data, dim, centered, normalized, inverse=False):
@@ -50,9 +50,7 @@ class FFT(torch.autograd.Function):
             raise ValueError("Currently half precision FFT is not supported.")
         if centered:
             data = fftshift(data, dim=dim)
-
         data = view_as_real(data)
-
         return data
 
 
@@ -158,7 +156,6 @@ def fft2(
     -------
     torch.Tensor: the fft of the data.
     """
-
     return FFT.apply(data, dim, centered, normalized)
 
 
@@ -190,7 +187,6 @@ def ifft2(
     -------
     torch.Tensor: the ifft of the data.
     """
-
     return FFT.apply(data, dim, centered, normalized, True)
 
 
