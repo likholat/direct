@@ -46,6 +46,7 @@ setup(
         "pyxb==1.2.6",
         "ismrmrd==1.9.1",
         "tensorboard>=2.5.0",
+        "opencv-python==4.3.0.",
         "openvino-dev==2021.4.2",
         "openvino-extensions==2021.4.2",
     ],
