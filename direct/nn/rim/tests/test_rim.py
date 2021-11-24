@@ -26,7 +26,7 @@ def create_input(shape):
 
 @pytest.mark.parametrize(
     "shape",
-    [   
+    [
         # [1, 1, 3, 3],
         # [1, 1, 4, 4],
         # [3, 3, 16, 16],
@@ -69,8 +69,6 @@ def create_input(shape):
         # "input-kspace",
     ],
 )
-
-
 def test_rim(
     shape,
     hidden_channels,
