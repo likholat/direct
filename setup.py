@@ -38,6 +38,7 @@ setup(
         "numpy<1.20.0",
         "h5py>=2.10.0",
         "omegaconf>=2.0.0",
+        "onnx==1.10.2",
         "torch==1.9.0",
         "torchvision==0.10.0",
         "scikit-image>=0.18.1",
