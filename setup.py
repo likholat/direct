@@ -35,7 +35,7 @@ setup(
         ],
     },
     install_requires=[
-        "numpy>=1.20.0",
+        "numpy<1.20.0",
         "h5py>=2.10.0",
         "omegaconf>=2.0.0",
         "torch==1.9.0",
