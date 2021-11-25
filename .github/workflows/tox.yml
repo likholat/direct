@@ -19,7 +19,7 @@ jobs:
         python-version: ${{ matrix.python-version }}
     - name: Install dependencies
       run: |
-        sudo apt-get install libopencv-dev==3.2.0
+        sudo apt-get install -y libopencv-dev
         python -m pip install --upgrade pip setuptools wheel
         pip install tox tox-gh-actions
     - name: Test with tox
