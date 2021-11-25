@@ -1,5 +1,5 @@
 from openvino_extensions import get_extensions_path
-from openvino.inference_engine import *
+from openvino.inference_engine import IECore
 
 import torch
 import torch.nn as nn
@@ -37,7 +37,7 @@ class OpenVINOModel(nn.Module):
         )
 
         dirname = os.path.dirname(__file__)
-        mo_extensions = os.path.join(dirname, "mo_extensions")
+        mo_extension = os.path.join(dirname, "mo_extensions")
 
         subprocess.run(
             [
@@ -45,7 +45,7 @@ class OpenVINOModel(nn.Module):
                 "-m",
                 "mo",
                 "--input_model=model.onnx",
-                "--extension=" + mo_extensions,
+                "--extension=" + mo_extension,
             ]
         )
 
