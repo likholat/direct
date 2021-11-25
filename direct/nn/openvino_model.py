@@ -22,8 +22,6 @@ class OpenVINOModel(nn.Module):
             "sensitivity_map": sensitivity_map,
         }
 
-        # inp = ()
-
         origin_forward = self.model.forward
         self.model.forward = lambda x: origin_forward(
             input_image, masked_kspace=masked_kspace, sampling_mask=sampling_mask, sensitivity_map=sensitivity_map

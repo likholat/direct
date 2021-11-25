@@ -1,20 +1,12 @@
 # coding=utf-8
 # Copyright (c) DIRECT Contributors
-from openvino_extensions import get_extensions_path
-from openvino.inference_engine import IECore
-
-import subprocess
-import sys
-import numpy as np
-import os
-
-from direct.nn.openvino_model import *
-
 import pytest
 import torch
+import numpy as np
 
-from direct.data.transforms import fft2, ifft2
 from direct.nn.rim.rim import RIM
+from direct.nn.openvino_model import OpenVINOModel
+from direct.data.transforms import fft2, ifft2
 
 
 def create_input(shape):
