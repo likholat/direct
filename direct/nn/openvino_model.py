@@ -1,5 +1,5 @@
 from openvino_extensions import get_extensions_path
-from openvino.inference_engine import IECore
+from openvino.inference_engine import *
 
 import torch
 import torch.nn as nn
