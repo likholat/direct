@@ -23,35 +23,10 @@ class FFT(torch.autograd.Function):
 
     @staticmethod
     def forward(self, data, dim, centered, normalized, inverse=False):
-        if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
-            raise TypeError(
-                f"Currently fft2 does not support negative indexing. "
-                f"Dim should contain only positive integers. Got {dim}."
-            )
-        assert_complex(data, complex_last=True)
-        data = view_as_complex(data)
-        if centered:
-            data = ifftshift(data, dim=dim)
-        # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
-        if verify_fft_dtype_possible(data, dim):
-            if inverse:
-                data = torch.fft.ifftn(
-                    data,
-                    dim=dim,
-                    norm="ortho" if normalized else None,
-                )
-            else:
-                data = torch.fft.fftn(
-                    data,
-                    dim=dim,
-                    norm="ortho" if normalized else None,
-                )
+        if inverse:
+            return origin_ifft2(data, dim=dim, centered=centered, normalized=normalized)
         else:
-            raise ValueError("Currently half precision FFT is not supported.")
-        if centered:
-            data = fftshift(data, dim=dim)
-        data = view_as_real(data)
-        return data
+            return origin_fft2(data, dim=dim, centered=centered, normalized=normalized)
 
 
 def to_tensor(data: np.ndarray) -> torch.Tensor:
@@ -128,7 +103,7 @@ def view_as_real(data):
     return torch.view_as_real(data)
 
 
-def fft2(
+def origin_fft2(
     data: torch.Tensor,
     dim: Tuple[int, ...] = (1, 2),
     centered: bool = True,
@@ -156,10 +131,44 @@ def fft2(
     -------
     torch.Tensor: the fft of the data.
     """
+    if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
+        raise TypeError(
+            f"Currently fft2 does not support negative indexing. "
+            f"Dim should contain only positive integers. Got {dim}."
+        )
+
+    assert_complex(data, complex_last=True)
+
+    data = view_as_complex(data)
+    if centered:
+        data = ifftshift(data, dim=dim)
+    # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
+    if verify_fft_dtype_possible(data, dim):
+        data = torch.fft.fftn(
+            data,
+            dim=dim,
+            norm="ortho" if normalized else None,
+        )
+    else:
+        raise ValueError("Currently half precision FFT is not supported.")
+
+    if centered:
+        data = fftshift(data, dim=dim)
+
+    data = view_as_real(data)
+    return data
+
+
+def fft2(
+    data: torch.Tensor,
+    dim: Tuple[int, ...] = (1, 2),
+    centered: bool = True,
+    normalized: bool = True,
+) -> torch.Tensor:
     return FFT.apply(data, dim, centered, normalized)
 
 
-def ifft2(
+def origin_ifft2(
     data: torch.Tensor,
     dim: Tuple[int, ...] = (1, 2),
     centered: bool = True,
@@ -187,6 +196,39 @@ def ifft2(
     -------
     torch.Tensor: the ifft of the data.
     """
+    if not all((_ >= 0 and isinstance(_, int)) for _ in dim):
+        raise TypeError(
+            f"Currently ifft2 does not support negative indexing. "
+            f"Dim should contain only positive integers. Got {dim}."
+        )
+    assert_complex(data, complex_last=True)
+
+    data = view_as_complex(data)
+    if centered:
+        data = ifftshift(data, dim=dim)
+    # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
+    if verify_fft_dtype_possible(data, dim):
+        data = torch.fft.ifftn(
+            data,
+            dim=dim,
+            norm="ortho" if normalized else None,
+        )
+    else:
+        raise ValueError("Currently half precision FFT is not supported.")
+
+    if centered:
+        data = fftshift(data, dim=dim)
+
+    data = view_as_real(data)
+    return data
+
+
+def ifft2(
+    data: torch.Tensor,
+    dim: Tuple[int, ...] = (1, 2),
+    centered: bool = True,
+    normalized: bool = True,
+) -> torch.Tensor:
     return FFT.apply(data, dim, centered, normalized, True)
 
 

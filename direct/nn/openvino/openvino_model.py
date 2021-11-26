@@ -45,7 +45,8 @@ class OpenVINOModel(nn.Module):
                 "-m",
                 "mo",
                 "--input_model=model.onnx",
-                "--extension=" + mo_extension,
+                "--extension",
+                mo_extension,
             ]
         )
 

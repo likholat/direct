@@ -1,12 +1,13 @@
 # coding=utf-8
 # Copyright (c) DIRECT Contributors
+
 import pytest
 import torch
 import numpy as np
 
-from direct.nn.rim.rim import RIM
-from direct.nn.openvino_model import OpenVINOModel
 from direct.data.transforms import fft2, ifft2
+from direct.nn.rim.rim import RIM
+from direct.nn.openvino.openvino_model import OpenVINOModel
 
 
 def create_input(shape):
