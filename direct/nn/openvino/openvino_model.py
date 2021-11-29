@@ -55,5 +55,8 @@ class OpenVINOModel(nn.Module):
         ie.add_extension(get_extensions_path(), "CPU")
         net = ie.read_network("model.xml", "model.bin")
         exec_net = ie.load_network(net, "CPU")
+        res = exec_net.infer(input_map)
 
-        return exec_net.infer(input_map)
+        out = (torch.Tensor(res["cell_outputs"]), torch.Tensor(res["previous_state"]))
+
+        return out

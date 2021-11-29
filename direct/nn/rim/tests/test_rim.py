@@ -50,17 +50,93 @@ def create_input(shape):
 )
 @pytest.mark.parametrize(
     "skip_connections",
-    [True],  # , False - error
+    [True, False],
 )
 @pytest.mark.parametrize(
     "image_init",
     [
         "zero-filled",
-        # "sense",
-        # "input-kspace",
+        "sense",
+        "input-kspace",
     ],
 )
 def test_rim(
+    shape,
+    hidden_channels,
+    length,
+    depth,
+    no_parameter_sharing,
+    instance_norm,
+    dense_connect,
+    skip_connections,
+    image_init,
+):
+    model = RIM(
+        fft2,
+        ifft2,
+        hidden_channels=hidden_channels,
+        length=length,
+        depth=depth,
+        no_parameter_sharing=no_parameter_sharing,
+        instance_norm=instance_norm,
+        dense_connect=dense_connect,
+        skip_connections=skip_connections,
+        image_initialization=image_init,
+    ).cpu()
+    img = create_input([shape[0]] + shape[2:] + [2]).cpu()
+    kspace = create_input(shape + [2]).cpu()
+    sens = create_input(shape + [2]).cpu()
+    mask = create_input([shape[0]] + [1] + shape[2:] + [1]).round().int().cpu()
+
+    out = model(img, kspace, mask, sens)[0][-1]
+
+    assert list(out.shape) == [shape[0]] + [2] + shape[2:]
+
+
+@pytest.mark.parametrize(
+    "shape",
+    [
+        [3, 3, 16, 16],
+        [2, 5, 16, 32],
+    ],
+)
+@pytest.mark.parametrize(
+    "hidden_channels",
+    [4, 8],
+)
+@pytest.mark.parametrize(
+    "length",
+    [3],
+)
+@pytest.mark.parametrize(
+    "depth",
+    [1, 2],
+)
+@pytest.mark.parametrize(
+    "no_parameter_sharing",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "instance_norm",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "dense_connect",
+    [True, False],
+)
+@pytest.mark.parametrize(
+    "skip_connections",
+    [True],  # False
+)
+@pytest.mark.parametrize(
+    "image_init",
+    [
+        "zero-filled",
+        "sense",
+        "input-kspace",
+    ],
+)
+def test_ov_rim(
     shape,
     hidden_channels,
     length,
@@ -89,18 +165,9 @@ def test_rim(
     sens = create_input(shape + [2]).cpu()
     mask = create_input([shape[0]] + [1] + shape[2:] + [1]).round().int().cpu()
 
-    out = model(img, kspace, mask, sens)[0][-1]
-
+    out = model(img, kspace, mask, sens)
     ov_model = OpenVINOModel(model)
     ov_out = ov_model(img, kspace, mask, sens)
-    # print(ov_out)
 
-    ov_out = ov_out["cell_outputs"]
-
-    # print(out.shape)
-    # print(ov_out.shape)
-    # print('Reference range: [{}, {}]'.format(np.min(out.detach().numpy()), np.max(out.detach().numpy())))
-    # print('Out range: [{}, {}]'.format(np.min(ov_out), np.max(ov_out)))
-    # print(np.max(np.abs(out.detach().numpy() - ov_out)))
-    assert np.max(np.abs(out.detach().numpy() - ov_out)) < 1e-5
-    assert list(out.shape) == [shape[0]] + [2] + shape[2:]
+    assert torch.max(torch.abs(out[0][-1] - ov_out[0])) < 1e-5
+    assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-4
