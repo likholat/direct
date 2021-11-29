@@ -29,11 +29,12 @@ class OpenVINOModel(nn.Module):
 
         torch.onnx.export(
             self.model,
-            input_map,
+            [input_image, masked_kspace, sampling_mask, sensitivity_map],
             "model.onnx",
             opset_version=11,
             enable_onnx_checker=False,
             input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
+            output_names=["cell_outputs", "previous_state"],
         )
 
         dirname = os.path.dirname(__file__)
