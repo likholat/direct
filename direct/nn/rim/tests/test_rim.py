@@ -20,15 +20,13 @@ def create_input(shape):
 @pytest.mark.parametrize(
     "shape",
     [
-        # [1, 1, 3, 3],
-        # [1, 1, 4, 4],
-        # [3, 3, 16, 16],
+        [3, 3, 16, 16],
         [2, 5, 16, 32],
     ],
 )
 @pytest.mark.parametrize(
     "hidden_channels",
-    [4],  # , 8
+    [4, 8],
 )
 @pytest.mark.parametrize(
     "length",
@@ -36,23 +34,23 @@ def create_input(shape):
 )
 @pytest.mark.parametrize(
     "depth",
-    [1],  # , 2
+    [1, 2],
 )
 @pytest.mark.parametrize(
     "no_parameter_sharing",
-    [True],  # , False
+    [True, False],
 )
 @pytest.mark.parametrize(
     "instance_norm",
-    [True],  # , False
+    [True, False],
 )
 @pytest.mark.parametrize(
     "dense_connect",
-    [True],  # , False
+    [True, False],
 )
 @pytest.mark.parametrize(
     "skip_connections",
-    [True],  # , False
+    [True],  # , False - error
 )
 @pytest.mark.parametrize(
     "image_init",
@@ -95,8 +93,9 @@ def test_rim(
 
     ov_model = OpenVINOModel(model)
     ov_out = ov_model(img, kspace, mask, sens)
+    # print(ov_out)
 
-    ov_out = list(ov_out.values())[1]
+    ov_out = ov_out["cell_outputs"]
 
     # print(out.shape)
     # print(ov_out.shape)
