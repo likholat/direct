@@ -126,7 +126,7 @@ def test_rim(
 )
 @pytest.mark.parametrize(
     "skip_connections",
-    [True],  # False
+    [True],  # False - not yet supported
 )
 @pytest.mark.parametrize(
     "image_init",
@@ -169,5 +169,5 @@ def test_ov_rim(
     ov_model = OpenVINOModel(model)
     ov_out = ov_model(img, kspace, mask, sens)
 
-    assert torch.max(torch.abs(out[0][-1] - ov_out[0])) < 1e-5
+    assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
     assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-4

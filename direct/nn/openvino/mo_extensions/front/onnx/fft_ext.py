@@ -22,14 +22,6 @@ class FFTFrontReplacer(FrontReplacementOp):
         else:
             dim = onnx_attr(node, "dim", "ints", default=[2, 3])
 
-            # shapeof = Shape(graph, {'name': node.name + '/Shape'}).create_node([node])
-            # slice = StridedSlice(graph, {'name': node.name + '/StridedSlice',
-            #                             'begin_mask': [1,1,0,0,0],
-            #                             'end_mask': [1,1,0,0,0],
-            #                             'new_axis_mask': [0,0,0,0],
-            #                             'shrink_axis_mask': [0,0,1,1,1],
-            #                             'ellipsis_mask': [0,0,0,0,0]}).create_node()
-
             input_node = Node(graph, graph.get_nodes_with_attributes(op="Parameter")[0])
             shift_x = int(input_node.shape[1] / 2)
             shift_y = int(input_node.shape[2] / 2)
@@ -41,8 +33,6 @@ class FFTFrontReplacer(FrontReplacementOp):
             shift = Const(graph, {"value": [-shift_x, -shift_y]}).create_node()
             axes = Const(graph, {"value": dim}).create_node()
             roll_fftshift = Roll(graph, {"name": node.name + "/fftshift_"}).create_node()
-
-            # slice.in_port(0).connect(shapeof.out_port(0)) #[ ERROR ]: Graph contains a cycle. Can not proceed.
 
             node.in_port(0).get_connection().set_destination(roll_ifftshift.in_port(0))
 

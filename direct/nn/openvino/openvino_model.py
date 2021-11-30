@@ -14,7 +14,7 @@ class OpenVINOModel(nn.Module):
         super().__init__()
         self.model = model
 
-    def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map, loglikelihood_scaling=None):
+    def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
         input_map = {
             "input_image": input_image,
             "masked_kspace": masked_kspace,
@@ -57,6 +57,6 @@ class OpenVINOModel(nn.Module):
         exec_net = ie.load_network(net, "CPU")
         res = exec_net.infer(input_map)
 
-        out = (torch.Tensor(res["cell_outputs"]), torch.Tensor(res["previous_state"]))
+        out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
 
         return out
