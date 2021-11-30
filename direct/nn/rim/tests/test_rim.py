@@ -3,7 +3,6 @@
 
 import pytest
 import torch
-import numpy as np
 
 from direct.data.transforms import fft2, ifft2
 from direct.nn.rim.rim import RIM

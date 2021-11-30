@@ -13,14 +13,11 @@ class OpenVINOModel(nn.Module):
     def __init__(self, model):
         super().__init__()
         self.model = model
+        self.exec_net = None
 
-    def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
-        input_map = {
-            "input_image": input_image,
-            "masked_kspace": masked_kspace,
-            "sampling_mask": sampling_mask,
-            "sensitivity_map": sensitivity_map,
-        }
+    def create_net(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
+        ie = IECore()
+        ie.add_extension(get_extensions_path(), "CPU")
 
         origin_forward = self.model.forward
         self.model.forward = lambda x: origin_forward(
@@ -51,12 +48,21 @@ class OpenVINOModel(nn.Module):
             ]
         )
 
-        ie = IECore()
-        ie.add_extension(get_extensions_path(), "CPU")
         net = ie.read_network("model.xml", "model.bin")
-        exec_net = ie.load_network(net, "CPU")
-        res = exec_net.infer(input_map)
+        self.exec_net = ie.load_network(net, "CPU")
 
+    def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
+        input_map = {
+            "input_image": input_image,
+            "masked_kspace": masked_kspace,
+            "sampling_mask": sampling_mask,
+            "sensitivity_map": sensitivity_map,
+        }
+
+        if self.exec_net is None:
+            self.create_net(input_image, masked_kspace, sampling_mask, sensitivity_map)
+
+        res = self.exec_net.infer(input_map)
         out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
 
         return out
