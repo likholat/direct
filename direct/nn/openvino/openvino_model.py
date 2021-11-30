@@ -3,7 +3,6 @@ from openvino.inference_engine import IECore
 
 import torch
 import torch.nn as nn
-
 import subprocess
 import sys
 import os
@@ -19,14 +18,9 @@ class OpenVINOModel(nn.Module):
         ie = IECore()
         ie.add_extension(get_extensions_path(), "CPU")
 
-        origin_forward = self.model.forward
-        self.model.forward = lambda x: origin_forward(
-            input_image, masked_kspace=masked_kspace, sampling_mask=sampling_mask, sensitivity_map=sensitivity_map
-        )
-
         torch.onnx.export(
             self.model,
-            [input_image, masked_kspace, sampling_mask, sensitivity_map],
+            (input_image, masked_kspace, sampling_mask, sensitivity_map),
             "model.onnx",
             opset_version=11,
             enable_onnx_checker=False,
