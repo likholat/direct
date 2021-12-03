@@ -65,7 +65,7 @@ class MRILogLikelihood(nn.Module):
         """
 
         input_image = input_image.permute(0, 2, 3, 1)  # shape (N, height, width, complex)
-
+        
         if loglikelihood_scaling is not None:
             loglikelihood_scaling = loglikelihood_scaling
         else:
@@ -87,6 +87,8 @@ class MRILogLikelihood(nn.Module):
             self.forward_operator(mul, dim=self._spatial_dims),
         )  # shape (N, coil, height, width, complex)
 
+        return mr_forward
+
         error = mr_forward - loglikelihood_scaling * torch.where(
             sampling_mask == 0,
             torch.tensor([0.0], dtype=masked_kspace.dtype).to(masked_kspace.device),
@@ -94,6 +96,8 @@ class MRILogLikelihood(nn.Module):
         )  # shape (N, coil, height, width, complex)
 
         mr_backward = self.backward_operator(error, dim=self._spatial_dims)  # shape (N, coil, height, width, complex)
+
+        return mr_backward
 
         if sensitivity_map is not None:
             out = T.complex_multiplication(T.conjugate(sensitivity_map), mr_backward).sum(self._coil_dim)
@@ -308,6 +312,9 @@ class RIM(nn.Module):
         -------
         torch.Tensor
         """
+        print('00000000')
+        print(torch.view_as_complex(input_image))
+        print('00000000')
         if input_image is None:
             if self.image_initialization == "sense":
                 input_image = self.compute_sense_init(
@@ -355,6 +362,7 @@ class RIM(nn.Module):
             previous_state = torch.zeros(*state_size, dtype=input_image.dtype).to(input_image.device)
 
         cell_outputs = []
+        # cell_outputs = torch.Tensor()
         intermediate_image = input_image  # shape (N, complex=2, height, width)
 
         for cell_idx in range(self.length):
@@ -367,6 +375,8 @@ class RIM(nn.Module):
                 sampling_mask,
                 loglikelihood_scaling,
             )  # shape (N, complex=2, height, width)
+
+            return grad_loglikelihood, previous_state
 
             if grad_loglikelihood.abs().max() > 150.0:
                 warnings.warn(
@@ -398,5 +408,10 @@ class RIM(nn.Module):
             # Only save intermediate reconstructions at training step
             if self.training or cell_idx == (self.length - 1):
                 cell_outputs.append(intermediate_image)  # type: ignore
+
+        # cell_outputs = torch.stack(cell_outputs)
+        # print('0000000000000000000000', len(cell_outputs))
+        # print('1111111111111111111111', cell_outputs[0].shape)
+        # print('!!!!!!!!!!!!!!!!!!!!!!', previous_state.shape)
 
         return cell_outputs, previous_state

@@ -1,4 +1,4 @@
-from openvino_extensions import get_extensions_path
+# from openvino_extensions import get_extensions_path
 from openvino.inference_engine import IECore
 
 import torch
@@ -16,7 +16,11 @@ class OpenVINOModel(nn.Module):
 
     def create_net(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
         ie = IECore()
-        ie.add_extension(get_extensions_path(), "CPU")
+        # ie.add_extension(get_extensions_path(), "CPU")
+        ie.add_extension("/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so", "CPU")
+
+
+
 
         torch.onnx.export(
             self.model,
@@ -24,7 +28,7 @@ class OpenVINOModel(nn.Module):
             "model.onnx",
             opset_version=11,
             enable_onnx_checker=False,
-            input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
+            input_names=["input_image"], #"masked_kspace", "sampling_mask", "sensitivity_map"
             output_names=["cell_outputs", "previous_state"],
         )
 
@@ -48,15 +52,26 @@ class OpenVINOModel(nn.Module):
     def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
         input_map = {
             "input_image": input_image,
-            "masked_kspace": masked_kspace,
-            "sampling_mask": sampling_mask,
-            "sensitivity_map": sensitivity_map,
+            # "masked_kspace": masked_kspace,
+            # "sampling_mask": sampling_mask,
+            # "sensitivity_map": sensitivity_map,
         }
 
         if self.exec_net is None:
             self.create_net(input_image, masked_kspace, sampling_mask, sensitivity_map)
 
         res = self.exec_net.infer(input_map)
-        out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
+
+        # types = {}
+        # counts = self.exec_net.requests[0].get_perf_counts()
+        # for count in counts.values():
+        #     t = count['layer_type']
+        #     types[t] = types.get(t, 0) + count['real_time']
+
+        # for k, v in types.items():
+        #     print(k, v)
+
+        # out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
+        out = ([torch.Tensor(res["cell_outputs"])])
 
         return out
