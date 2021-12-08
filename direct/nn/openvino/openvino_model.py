@@ -25,7 +25,7 @@ class OpenVINOModel(nn.Module):
             "model.onnx",
             opset_version=11,
             enable_onnx_checker=False,
-            input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"], #, "masked_kspace", "sampling_mask", "sensitivity_map"
+            input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
             output_names=["cell_outputs", "previous_state"],
         )
 
@@ -69,6 +69,5 @@ class OpenVINOModel(nn.Module):
         #     print(k, v)
 
         out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
-        # out = ([torch.Tensor(res["cell_outputs"])])
 
         return out

@@ -22,6 +22,7 @@ class FFTFrontExtractor(FrontExtractorOp):
         FFT.update_node_stat(node, data)
         return cls.enabled
 
+
 class IFFTFrontExtractor(FrontExtractorOp):
     op = 'IFFT'
     enabled = True
@@ -34,7 +35,6 @@ class IFFTFrontExtractor(FrontExtractorOp):
 
         IFFT.update_node_stat(node, data)
         return cls.enabled
-
 
 
 # class FFTFrontReplacer(FrontReplacementOp):
@@ -92,7 +92,7 @@ class IFFTFrontExtractor(FrontExtractorOp):
 #             dim = onnx_attr(node, "dim", "ints", default=[2, 3])
 #             input_node = Node(graph, graph.get_nodes_with_attributes(op="Parameter")[0])
 #             shift_x = int(input_node.shape[1] / 2)
-#             shift_y = int(input_node.shape[2] / 2)  
+#             shift_y = int(input_node.shape[2] / 2)
 
 #             shift_i = Const(graph, {"value": [shift_x, shift_y]}).create_node()
 #             axes_i = Const(graph, {"value": dim}).create_node()
