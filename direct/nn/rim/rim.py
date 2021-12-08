@@ -87,7 +87,7 @@ class MRILogLikelihood(nn.Module):
             self.forward_operator(mul, dim=self._spatial_dims),
         )  # shape (N, coil, height, width, complex)
 
-        return mr_forward
+        # return mr_forward
 
         error = mr_forward - loglikelihood_scaling * torch.where(
             sampling_mask == 0,
@@ -97,7 +97,7 @@ class MRILogLikelihood(nn.Module):
 
         mr_backward = self.backward_operator(error, dim=self._spatial_dims)  # shape (N, coil, height, width, complex)
 
-        return mr_backward
+        # return mr_backward
 
         if sensitivity_map is not None:
             out = T.complex_multiplication(T.conjugate(sensitivity_map), mr_backward).sum(self._coil_dim)
@@ -312,9 +312,6 @@ class RIM(nn.Module):
         -------
         torch.Tensor
         """
-        print('00000000')
-        print(torch.view_as_complex(input_image))
-        print('00000000')
         if input_image is None:
             if self.image_initialization == "sense":
                 input_image = self.compute_sense_init(
@@ -376,7 +373,8 @@ class RIM(nn.Module):
                 loglikelihood_scaling,
             )  # shape (N, complex=2, height, width)
 
-            return grad_loglikelihood, previous_state
+
+            # return grad_loglikelihood, previous_state
 
             if grad_loglikelihood.abs().max() > 150.0:
                 warnings.warn(

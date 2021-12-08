@@ -19,16 +19,13 @@ class OpenVINOModel(nn.Module):
         # ie.add_extension(get_extensions_path(), "CPU")
         ie.add_extension("/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so", "CPU")
 
-
-
-
         torch.onnx.export(
             self.model,
             (input_image, masked_kspace, sampling_mask, sensitivity_map),
             "model.onnx",
             opset_version=11,
             enable_onnx_checker=False,
-            input_names=["input_image"], #"masked_kspace", "sampling_mask", "sensitivity_map"
+            input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"], #, "masked_kspace", "sampling_mask", "sensitivity_map"
             output_names=["cell_outputs", "previous_state"],
         )
 
@@ -52,9 +49,9 @@ class OpenVINOModel(nn.Module):
     def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
         input_map = {
             "input_image": input_image,
-            # "masked_kspace": masked_kspace,
-            # "sampling_mask": sampling_mask,
-            # "sensitivity_map": sensitivity_map,
+            "masked_kspace": masked_kspace,
+            "sampling_mask": sampling_mask,
+            "sensitivity_map": sensitivity_map,
         }
 
         if self.exec_net is None:
@@ -71,7 +68,7 @@ class OpenVINOModel(nn.Module):
         # for k, v in types.items():
         #     print(k, v)
 
-        # out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
-        out = ([torch.Tensor(res["cell_outputs"])])
+        out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
+        # out = ([torch.Tensor(res["cell_outputs"])])
 
         return out
