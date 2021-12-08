@@ -355,7 +355,6 @@ class RIM(nn.Module):
             previous_state = torch.zeros(*state_size, dtype=input_image.dtype).to(input_image.device)
 
         cell_outputs = []
-        # cell_outputs = torch.Tensor()
         intermediate_image = input_image  # shape (N, complex=2, height, width)
 
         for cell_idx in range(self.length):
