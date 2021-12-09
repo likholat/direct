@@ -152,8 +152,8 @@ def origin_fft2(
     else:
         raise ValueError("Currently half precision FFT is not supported.")
 
-    # if centered:
-    #     data = fftshift(data, dim=dim)
+    if centered:
+        data = fftshift(data, dim=dim)
 
     data = view_as_real(data)
     return data
@@ -216,8 +216,8 @@ def origin_ifft2(
     else:
         raise ValueError("Currently half precision FFT is not supported.")
 
-    # if centered:
-    #     data = fftshift(data, dim=dim)
+    if centered:
+        data = fftshift(data, dim=dim)
 
     data = view_as_real(data)
     return data
