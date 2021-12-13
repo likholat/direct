@@ -15,10 +15,6 @@ class OpenVINOModel(nn.Module):
         self.exec_net = None
 
     def create_net(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
-        ie = IECore()
-        # ie.add_extension(get_extensions_path(), "CPU")
-        ie.add_extension("/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so", "CPU")
-
         torch.onnx.export(
             self.model,
             (input_image, masked_kspace, sampling_mask, sensitivity_map),
@@ -28,6 +24,11 @@ class OpenVINOModel(nn.Module):
             input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
             output_names=["cell_outputs", "previous_state"],
         )
+
+        ie = IECore()
+        # ie.add_extension(get_extensions_path(), "CPU")
+        ie.add_extension(
+            "/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so", "CPU")
 
         dirname = os.path.dirname(__file__)
         mo_extension = os.path.join(dirname, "mo_extensions")

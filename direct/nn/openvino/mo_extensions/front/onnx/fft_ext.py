@@ -4,14 +4,14 @@ from mo.front.extractor import FrontExtractorOp
 
 
 class FFTFrontExtractor(FrontExtractorOp):
-    op = 'FFT'
+    op = "FFT"
     enabled = True
 
     @classmethod
     def extract(cls, node):
         data = {
-            'inverse': onnx_attr(node, 'inverse', 'i'),
-            'centered': onnx_attr(node, 'centered', 'i'),
+            "inverse": onnx_attr(node, "inverse", "i"),
+            "centered": onnx_attr(node, "centered", "i"),
         }
 
         FFT.update_node_stat(node, data)
@@ -19,14 +19,14 @@ class FFTFrontExtractor(FrontExtractorOp):
 
 
 class IFFTFrontExtractor(FrontExtractorOp):
-    op = 'IFFT'
+    op = "IFFT"
     enabled = True
 
     @classmethod
     def extract(cls, node):
         data = {
-            'inverse': 1,
-            'centered': onnx_attr(node, 'centered', 'i'),
+            "inverse": 1,
+            "centered": onnx_attr(node, "centered", "i"),
         }
 
         IFFT.update_node_stat(node, data)
