@@ -1,4 +1,4 @@
-# from openvino_extensions import get_extensions_path
+from openvino_extensions import get_extensions_path
 from openvino.inference_engine import IECore
 
 import torch
@@ -26,9 +26,7 @@ class OpenVINOModel(nn.Module):
         )
 
         ie = IECore()
-        # ie.add_extension(get_extensions_path(), "CPU")
-        ie.add_extension(
-            "/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so", "CPU")
+        ie.add_extension(get_extensions_path(), "CPU")
 
         dirname = os.path.dirname(__file__)
         mo_extension = os.path.join(dirname, "mo_extensions")
@@ -59,16 +57,6 @@ class OpenVINOModel(nn.Module):
             self.create_net(input_image, masked_kspace, sampling_mask, sensitivity_map)
 
         res = self.exec_net.infer(input_map)
-
-        types = {}
-        counts = self.exec_net.requests[0].get_perf_counts()
-        for count in counts.values():
-            t = count['layer_type']
-            types[t] = types.get(t, 0) + count['real_time']
-
-        for k, v in types.items():
-            print(k, v)
-
         out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
 
         return out
