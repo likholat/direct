@@ -21,7 +21,7 @@ class FFT(Op):
         )
 
     def supported_attrs(self):
-        return ["inverse"]
+        return ["inverse", "centered"]
 
 
 class IFFT(Op):
@@ -42,4 +42,4 @@ class IFFT(Op):
         )
 
     def supported_attrs(self):
-        return ["inverse"]
+        return ["inverse", "centered"]
