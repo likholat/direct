@@ -60,14 +60,14 @@ class OpenVINOModel(nn.Module):
 
         res = self.exec_net.infer(input_map)
 
-        # types = {}
-        # counts = self.exec_net.requests[0].get_perf_counts()
-        # for count in counts.values():
-        #     t = count['layer_type']
-        #     types[t] = types.get(t, 0) + count['real_time']
+        types = {}
+        counts = self.exec_net.requests[0].get_perf_counts()
+        for count in counts.values():
+            t = count['layer_type']
+            types[t] = types.get(t, 0) + count['real_time']
 
-        # for k, v in types.items():
-        #     print(k, v)
+        for k, v in types.items():
+            print(k, v)
 
         out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
 
