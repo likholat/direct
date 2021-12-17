@@ -29,6 +29,16 @@ class FFT(torch.autograd.Function):
             return origin_fft2(data, dim=dim, centered=centered, normalized=normalized)
 
 
+class ComplexMultiplication(torch.autograd.Function):
+    @staticmethod
+    def symbolic(g, input_tensor, other_tensor):
+        return g.op("ComplexMultiplication", input_tensor, other_tensor)
+
+    @staticmethod
+    def forward(self, input_tensor, other_tensor):
+        return origin_complex_multiplication(input_tensor, other_tensor)
+
+
 def to_tensor(data: np.ndarray) -> torch.Tensor:
     """
     Convert numpy array to PyTorch tensor. Complex arrays will have real and imaginary parts on the last axis.
@@ -420,6 +430,10 @@ def ifftshift(data: torch.Tensor, dim: Tuple[Union[str, int], ...] = None) -> to
 
 
 def complex_multiplication(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
+    return ComplexMultiplication.apply(input_tensor, other_tensor)
+
+
+def origin_complex_multiplication(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
     """
     Multiplies two complex-valued tensors. Assumes input tensors are complex (last axis has dimension 2).
 
