@@ -3,9 +3,6 @@ from openvino.inference_engine import IECore
 
 import torch
 import torch.nn as nn
-import subprocess
-import sys
-import os
 import io
 
 
