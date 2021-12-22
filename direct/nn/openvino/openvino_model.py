@@ -6,6 +6,7 @@ import torch.nn as nn
 import subprocess
 import sys
 import os
+import io
 
 
 class OpenVINOModel(nn.Module):
@@ -15,34 +16,21 @@ class OpenVINOModel(nn.Module):
         self.exec_net = None
 
     def create_net(self, input_image, masked_kspace, sampling_mask, sensitivity_map):
+        ie = IECore()
+        ie.add_extension(get_extensions_path(), "CPU")
+
+        buf = io.BytesIO()        
         torch.onnx.export(
             self.model,
             (input_image, masked_kspace, sampling_mask, sensitivity_map),
-            "model.onnx",
+            buf,
             opset_version=11,
             enable_onnx_checker=False,
             input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
             output_names=["cell_outputs", "previous_state"],
         )
 
-        ie = IECore()
-        ie.add_extension(get_extensions_path(), "CPU")
-
-        dirname = os.path.dirname(__file__)
-        mo_extension = os.path.join(dirname, "mo_extensions")
-
-        subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "mo",
-                "--input_model=model.onnx",
-                "--extension",
-                mo_extension,
-            ]
-        )
-
-        net = ie.read_network("model.xml", "model.bin")
+        net = ie.read_network(buf.getvalue(), b"", init_from_buffer=True)
         self.exec_net = ie.load_network(net, "CPU")
 
     def forward(self, input_image, masked_kspace, sampling_mask, sensitivity_map):

@@ -19,7 +19,7 @@ from direct.utils.asserts import assert_complex, assert_same_shape
 class FFT(torch.autograd.Function):
     @staticmethod
     def symbolic(g, data, dim, centered, normalized, inverse=False):
-        return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered))
+        return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered), inverse_i=int(inverse))
 
     @staticmethod
     def forward(self, data, dim, centered, normalized, inverse=False):
