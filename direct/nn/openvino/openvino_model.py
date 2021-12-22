@@ -16,7 +16,7 @@ class OpenVINOModel(nn.Module):
         ie = IECore()
         ie.add_extension(get_extensions_path(), "CPU")
 
-        buf = io.BytesIO()    
+        buf = io.BytesIO()
         torch.onnx.export(
             self.model,
             (input_image, masked_kspace, sampling_mask, sensitivity_map),
