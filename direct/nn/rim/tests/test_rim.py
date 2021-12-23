@@ -82,6 +82,7 @@ def test_rim(
         skip_connections=skip_connections,
         image_initialization=image_init,
     ).cpu()
+
     img = create_input([shape[0]] + shape[2:] + [2]).cpu()
     kspace = create_input(shape + [2]).cpu()
     sens = create_input(shape + [2]).cpu()
