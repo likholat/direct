@@ -118,7 +118,7 @@ def test_rim(
 )
 @pytest.mark.parametrize(
     "instance_norm",
-    [False], # True,
+    [False],  # True,
 )
 @pytest.mark.parametrize(
     "dense_connect",
