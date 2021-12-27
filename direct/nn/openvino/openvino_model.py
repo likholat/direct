@@ -22,7 +22,7 @@ class OpenVINOModel(nn.Module):
             (input_image, masked_kspace, sampling_mask, sensitivity_map),
             buf,
             opset_version=11,
-            enable_onnx_checker=False,
+            operator_export_type=torch.onnx.OperatorExportTypes.ONNX_FALLTHROUGH,
             input_names=["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"],
             output_names=["cell_outputs", "previous_state"],
         )
