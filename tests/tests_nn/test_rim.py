@@ -4,6 +4,7 @@
 import pytest
 import torch
 
+
 from direct.data.transforms import fft2, ifft2
 from direct.nn.rim.rim import RIM
 from direct.nn.openvino.openvino_model import OpenVINOModel
@@ -111,7 +112,7 @@ def test_rim(
 @pytest.mark.parametrize(
     "shape",
     [
-        [2, 3, 11, 12],
+        [2, 3, 12, 12],  #  [2, 3, 11, 12] - not yet supported
     ],
 )
 @pytest.mark.parametrize(
@@ -152,9 +153,9 @@ def test_rim(
 )
 @pytest.mark.parametrize(
     "input_image_is_None",
-    [True, False],
+    [False], # True - not yet supported
 )
-def test_rim(
+def test_ov_rim(
     shape,
     hidden_channels,
     length,
@@ -181,30 +182,27 @@ def test_rim(
         learned_initializer=learned_initializer,
     ).cpu()
 
-    # img = create_input([shape[0]] + shape[2:] + [2]).cpu()
-    # kspace = create_input(shape + [2]).cpu()
-    # sens = create_input(shape + [2]).cpu()
-    # mask = create_input([shape[0]] + [1] + shape[2:] + [1]).round().int().cpu()
-
-    # out = model(img, kspace, mask, sens)
-    # ov_model = OpenVINOModel(model)
-    # ov_out = ov_model(img, kspace, mask, sens)
-
-    # assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
-    # assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-4
-
     inputs = {
         "input_image": create_input([shape[0]] + shape[2:] + [2]).cpu() if not input_image_is_None else None,
         "masked_kspace": create_input(shape + [2]).cpu(),
         "sensitivity_map": create_input(shape + [2]).cpu(),
         "sampling_mask": create_input([shape[0]] + [1] + shape[2:] + [1]).round().int().cpu(),
     }
-    if input_image_is_None:
-        if image_init == "input_image":
-            inputs["initial_image"] = create_input([shape[0]] + shape[2:] + [2]).cpu()
-        elif image_init == "input_kspace":
-            inputs["initial_kspace"] = create_input(shape + [2]).cpu()
+    
+    # if input_image_is_None:
+    #     if image_init == "input_image":
+    #         inputs["initial_image"] = create_input([shape[0]] + shape[2:] + [2]).cpu()
+    #     elif image_init == "input_kspace":
+    #         inputs["initial_kspace"] = create_input(shape + [2]).cpu()
+    # if image_init is None and input_image_is_None:
+    #     with pytest.raises(ValueError):
+    #         out = model(**inputs)[0][-1]
+    # else:
+    #     out = model(**inputs)[0][-1]
 
-    out = model(**inputs)[0][-1]
-    assert list(out.shape) == [shape[0]] + [2] + shape[2:]
-
+    out = model(**inputs)
+    ov_model = OpenVINOModel(model)
+    ov_out = ov_model(**inputs)
+    
+    assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
+    assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
