@@ -151,9 +151,7 @@ class Conv2dGRU(nn.Module):
 
             update = torch.sigmoid(self.update_gates[idx](stacked_inputs))
             reset = torch.sigmoid(self.reset_gates[idx](stacked_inputs))
-            delta = torch.tanh(
-                self.out_gates[idx](torch.cat([cell_input, prev_state * reset], dim=1))
-            )
+            delta = torch.tanh(self.out_gates[idx](torch.cat([cell_input, prev_state * reset], dim=1)))
             cell_input = prev_state * (1 - update) + delta * update
             new_states.append(cell_input)
             cell_input = F.relu(cell_input, inplace=False)
