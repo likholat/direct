@@ -185,4 +185,3 @@ def test_ov_rim(
 
     assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
     assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-4
-
