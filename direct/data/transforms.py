@@ -16,7 +16,11 @@ from direct.utils import ensure_list, is_complex_data, is_power_of_two
 from direct.utils.asserts import assert_complex, assert_same_shape
 
 
-class FFT(torch.autograd.Function):
+class FFTONNX(torch.autograd.Function):
+    """
+    This class is used as a simple wrapper over original FFT function. Required for ONNX conversion.
+    """
+
     @staticmethod
     def symbolic(g, data, dim, centered, normalized, inverse=False):
         return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered), inverse_i=int(inverse))
@@ -29,7 +33,12 @@ class FFT(torch.autograd.Function):
             return origin_fft2(data, dim=dim, centered=centered, normalized=normalized)
 
 
-class ComplexMultiplication(torch.autograd.Function):
+class ComplexMultiplicationONNX(torch.autograd.Function):
+    """
+    This class is used as a simple wrapper over original complex multiplication function.
+    Creates a single fused node in ONNX graph.
+    """
+
     @staticmethod
     def symbolic(g, input_tensor, other_tensor):
         return g.op("ComplexMultiplication", input_tensor, other_tensor)
@@ -175,7 +184,7 @@ def fft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFT.apply(data, dim, centered, normalized)
+    return FFTONNX.apply(data, dim, centered, normalized)
 
 
 def origin_ifft2(
@@ -239,7 +248,7 @@ def ifft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFT.apply(data, dim, centered, normalized, True)
+    return FFTONNX.apply(data, dim, centered, normalized, True)
 
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
@@ -383,7 +392,7 @@ def ifftshift(data: torch.Tensor, dim: Tuple[Union[str, int], ...] = None) -> to
 
 
 def complex_multiplication(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
-    return ComplexMultiplication.apply(input_tensor, other_tensor)
+    return ComplexMultiplicationONNX.apply(input_tensor, other_tensor)
 
 
 def origin_complex_multiplication(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:

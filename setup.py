@@ -47,7 +47,7 @@ setup(
         "tensorboard>=2.5.0",
         "tqdm",
         "openvino==2021.4.2",
-        "openvino-extensions==2021.4.2.3",
+        "openvino-extensions~=2021.4.2",
     ],
     extras_require={
         "dev": [
