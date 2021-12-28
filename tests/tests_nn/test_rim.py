@@ -4,7 +4,6 @@
 import pytest
 import torch
 
-
 from direct.data.transforms import fft2, ifft2
 from direct.nn.rim.rim import RIM
 from direct.nn.openvino.openvino_model import OpenVINOModel
@@ -108,7 +107,6 @@ def test_rim(
         out = model(**inputs)[0][-1]
         assert list(out.shape) == [shape[0]] + [2] + shape[2:]
 
-
 @pytest.mark.parametrize(
     "shape",
     [
@@ -203,6 +201,6 @@ def test_ov_rim(
     out = model(**inputs)
     ov_model = OpenVINOModel(model)
     ov_out = ov_model(**inputs)
-    
+
     assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
     assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
