@@ -6,7 +6,13 @@ import torch
 
 from direct.data.transforms import fft2, ifft2
 from direct.nn.rim.rim import RIM
-from direct.nn.openvino.openvino_model import OpenVINOModel
+
+try:
+    from direct.nn.openvino.openvino_model import OpenVINOModel
+
+    openvino_available = True
+except Exception:
+    openvino_available = False
 
 
 def create_input(shape):
@@ -19,7 +25,7 @@ def create_input(shape):
 @pytest.mark.parametrize(
     "shape",
     [
-        [2, 3, 11, 12],
+        [2, 3, 12, 12],
     ],
 )
 @pytest.mark.parametrize(
@@ -104,103 +110,13 @@ def test_rim(
         with pytest.raises(ValueError):
             out = model(**inputs)[0][-1]
     else:
-        out = model(**inputs)[0][-1]
-        assert list(out.shape) == [shape[0]] + [2] + shape[2:]
+        out = model(**inputs)
 
-@pytest.mark.parametrize(
-    "shape",
-    [
-        [2, 3, 12, 12],  #  [2, 3, 11, 12] - not yet supported
-    ],
-)
-@pytest.mark.parametrize(
-    "hidden_channels",
-    [4],
-)
-@pytest.mark.parametrize(
-    "length",
-    [3],
-)
-@pytest.mark.parametrize(
-    "depth",
-    [2],
-)
-@pytest.mark.parametrize(
-    "no_parameter_sharing",
-    [True, False],
-)
-@pytest.mark.parametrize(
-    "instance_norm",
-    [False],  # True - not yet supported
-)
-@pytest.mark.parametrize(
-    "dense_connect",
-    [True, False],
-)
-@pytest.mark.parametrize(
-    "skip_connections",
-    [True],  # False - not yet supported
-)
-@pytest.mark.parametrize(
-    "image_init",
-    ["zero_filled", "sense", "input_kspace", "input_image"],  #  None
-)
-@pytest.mark.parametrize(
-    "learned_initializer",
-    [True, False],
-)
-@pytest.mark.parametrize(
-    "input_image_is_None",
-    [False], # True - not yet supported
-)
-def test_ov_rim(
-    shape,
-    hidden_channels,
-    length,
-    depth,
-    no_parameter_sharing,
-    instance_norm,
-    dense_connect,
-    skip_connections,
-    image_init,
-    learned_initializer,
-    input_image_is_None,
-):
-    model = RIM(
-        fft2,
-        ifft2,
-        hidden_channels=hidden_channels,
-        length=length,
-        depth=depth,
-        no_parameter_sharing=no_parameter_sharing,
-        instance_norm=instance_norm,
-        dense_connect=dense_connect,
-        skip_connections=skip_connections,
-        image_initialization=image_init,
-        learned_initializer=learned_initializer,
-    ).cpu()
+        assert list(out[0][-1].shape) == [shape[0]] + [2] + shape[2:]
 
-    inputs = {
-        "input_image": create_input([shape[0]] + shape[2:] + [2]).cpu() if not input_image_is_None else None,
-        "masked_kspace": create_input(shape + [2]).cpu(),
-        "sensitivity_map": create_input(shape + [2]).cpu(),
-        "sampling_mask": create_input([shape[0]] + [1] + shape[2:] + [1]).round().int().cpu(),
-    }
-    
-    # if input_image_is_None:
-    #     if image_init == "input_image":
-    #         inputs["initial_image"] = create_input([shape[0]] + shape[2:] + [2]).cpu()
-    #     elif image_init == "input_kspace":
-    #         inputs["initial_kspace"] = create_input(shape + [2]).cpu()
-    # if image_init is None and input_image_is_None:
-    #     with pytest.raises(ValueError):
-    #         out = model(**inputs)[0][-1]
-    # else:
-    #     out = model(**inputs)[0][-1]
+        if openvino_available and not input_image_is_None and instance_norm is not True and skip_connections:
+            ov_model = OpenVINOModel(model)
+            ov_out = ov_model(**inputs)
 
-    out = model(**inputs)
-    ov_model = OpenVINOModel(model)
-    ov_out = ov_model(**inputs)
-
-    assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
-    assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
+            assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
+            assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
