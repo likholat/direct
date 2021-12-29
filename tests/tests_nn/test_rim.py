@@ -111,12 +111,11 @@ def test_rim(
             out = model(**inputs)[0][-1]
     else:
         out = model(**inputs)
-
         assert list(out[0][-1].shape) == [shape[0]] + [2] + shape[2:]
 
-        if openvino_available and not input_image_is_None and instance_norm is not True and skip_connections:
-            ov_model = OpenVINOModel(model)
-            ov_out = ov_model(**inputs)
+    if openvino_available and not input_image_is_None and instance_norm is not True and skip_connections:
+        ov_model = OpenVINOModel(model)
+        ov_out = ov_model(**inputs)
 
-            assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
-            assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
+        assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
+        assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
