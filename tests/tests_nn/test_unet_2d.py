@@ -9,6 +9,13 @@ import torch
 from direct.data.transforms import fft2, ifft2
 from direct.nn.unet.unet_2d import NormUnetModel2d, Unet2d
 
+try:
+    from direct.nn.openvino.openvino_model import OpenVINOModel
+
+    openvino_available = True
+except Exception:
+    openvino_available = False
+
 
 def create_input(shape):
     data = np.random.randn(*shape).copy()
@@ -57,5 +64,9 @@ def test_unet_2d(shape, num_filters, num_pool_layers, skip, normalized):
     sens = create_input(shape + [2]).cpu()
 
     out = model(data, sens)
+
+    if openvino_available:
+        ov_model = OpenVINOModel(model)
+        ov_out = ov_model(masked_kspace=data, sensitivity_map=sens)
 
     assert list(out.shape) == [shape[0]] + shape[2:] + [2]
