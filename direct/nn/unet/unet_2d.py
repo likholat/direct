@@ -11,6 +11,32 @@ from torch.nn import functional as F
 
 from direct.data import transforms as T
 
+class InstanceNorm2dFunc(torch.autograd.Function):
+    @staticmethod
+    def symbolic(g, cls, input, scale, bias):
+        return g.op("InstanceNormalization", input, scale, bias)
+
+    @staticmethod
+    def forward(self, cls, input, scale, bias):
+        y = cls.origin_forward(input)
+        return y
+
+class InstanceNorm2dONNX(nn.InstanceNorm2d):
+    """
+    This is a support class which helps export network with InstanceNorm2d in ONNX format.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.origin_forward = super().forward
+        self.num_features = args[0]
+
+    def forward(self, input):
+        scale = torch.ones(self.num_features)
+        bias = torch.zeros(self.num_features)
+        y = InstanceNorm2dFunc.apply(self, input, scale, bias).clone()
+        return y
+
 
 class ConvBlock(nn.Module):
     """
@@ -38,11 +64,13 @@ class ConvBlock(nn.Module):
 
         self.layers = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.InstanceNorm2d(out_channels),
+            # nn.InstanceNorm2d(out_channels),
+            InstanceNorm2dONNX(out_channels),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.Dropout2d(dropout_probability),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            nn.InstanceNorm2d(out_channels),
+            # nn.InstanceNorm2d(out_channels),
+            InstanceNorm2dONNX(out_channels),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.Dropout2d(dropout_probability),
         )
@@ -89,7 +117,8 @@ class TransposeConvBlock(nn.Module):
 
         self.layers = nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2, bias=False),
-            nn.InstanceNorm2d(out_channels),
+            # nn.InstanceNorm2d(out_channels),
+            InstanceNorm2dONNX(out_channels),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
         )
 
@@ -300,7 +329,7 @@ class NormUnetModel2d(nn.Module):
         w_mult: int,
     ) -> torch.Tensor:
 
-        return input[..., h_pad[0] : h_mult - h_pad[1], w_pad[0] : w_mult - w_pad[1]]
+        return input[..., int(h_pad[0]) : int(h_mult - h_pad[1]), int(w_pad[0]) :int(w_mult - w_pad[1])]
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """

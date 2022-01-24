@@ -17,6 +17,9 @@ class OpenVINOModel(nn.Module):
     def create_net(self, **kwargs):
         ie = IECore()
         ie.add_extension(get_extensions_path(), "CPU")
+        # ie.add_extension(
+        #     "/home/alikholat/projects/openvino_pytorch_layers/user_ie_extensions/build/libuser_cpu_extension.so", "CPU"
+        # )
 
         if self.model_name == "RIM":
             args = ["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"]
@@ -30,25 +33,31 @@ class OpenVINOModel(nn.Module):
         else:
             raise ValueError(f"The model is not supported by OpenVINO: {self.model.__class__}")
 
-        buf = io.BytesIO()
-        torch.onnx.export(
-            self.model,
-            tuple(self.input),
-            buf,
-            opset_version=11,
-            operator_export_type=torch.onnx.OperatorExportTypes.ONNX_FALLTHROUGH,
-            input_names=args,
-            output_names=output_names,
-        )
 
-        net = ie.read_network(buf.getvalue(), b"", init_from_buffer=True)
-        self.exec_net = ie.load_network(net, "CPU")
+        def instance_norm(x, running_mean, running_var, weight, bias, use_input_stats, momentum, eps):
+            return x
+
+        with torch.no_grad():
+            # torch.nn.functional.instance_norm = instance_norm
+            buf = io.BytesIO()
+            torch.onnx.export(
+                self.model,
+                tuple(self.input),
+                buf,
+                opset_version=12,
+                operator_export_type=torch.onnx.OperatorExportTypes.ONNX_FALLTHROUGH,
+                input_names=args,
+                output_names=output_names,
+            )
+
+            net = ie.read_network(buf.getvalue(), b"", init_from_buffer=True)
+            self.exec_net = ie.load_network(net, "CPU")
 
     def postprocess(self, res):
         if self.model_name == "RIM":
             out = ([torch.Tensor(res["cell_outputs"])], torch.Tensor(res["previous_state"]))
         elif self.model_name == "Unet2d":
-            out = torch.Tensor(next(res.iter()))
+            out = torch.Tensor(res["output"])
         return out
 
     def forward(self, **kwargs):
