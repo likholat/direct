@@ -22,8 +22,16 @@ class OpenVINOModel(nn.Module):
             args = ["input_image", "masked_kspace", "sampling_mask", "sensitivity_map"]
             output_names = ["cell_outputs", "previous_state"]
         elif self.model_name == "Unet2d":
-            args = ["masked_kspace", "sensitivity_map"]
             output_names = ["output"]
+            if self.model.image_initialization == "sense":
+                args = ["masked_kspace", "sensitivity_map"]
+            elif self.model.image_initialization == "zero_filled":
+                args = ["masked_kspace"]
+            else:
+                raise ValueError(
+                    f"Unknown image_initialization. Expected `sense` or `zero_filled`. "
+                    f"Got {self.model.image_initialization}."
+                )
 
         if args:
             self.input = [kwargs[k] for k in args]
