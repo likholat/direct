@@ -11,6 +11,7 @@ from torch.nn import functional as F
 
 from direct.data import transforms as T
 
+
 class InstanceNorm2dFunc(torch.autograd.Function):
     @staticmethod
     def symbolic(g, cls, input, scale, bias):
@@ -20,6 +21,7 @@ class InstanceNorm2dFunc(torch.autograd.Function):
     def forward(self, cls, input, scale, bias):
         y = cls.origin_forward(input)
         return y
+
 
 class InstanceNorm2dONNX(nn.InstanceNorm2d):
     """
@@ -329,7 +331,7 @@ class NormUnetModel2d(nn.Module):
         w_mult: int,
     ) -> torch.Tensor:
 
-        return input[..., int(h_pad[0]) : int(h_mult - h_pad[1]), int(w_pad[0]) :int(w_mult - w_pad[1])]
+        return input[..., int(h_pad[0]) : int(h_mult - h_pad[1]), int(w_pad[0]) : int(w_mult - w_pad[1])]
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """

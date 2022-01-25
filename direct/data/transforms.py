@@ -15,6 +15,7 @@ from direct.data.bbox import crop_to_bbox
 from direct.utils import ensure_list, is_complex_data, is_power_of_two
 from direct.utils.asserts import assert_complex, assert_same_shape
 
+
 class FFTONNX(torch.autograd.Function):
     """
     This class is used as a simple wrapper over original FFT function. Required for ONNX conversion.
