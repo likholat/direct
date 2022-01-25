@@ -15,7 +15,6 @@ from direct.data.bbox import crop_to_bbox
 from direct.utils import ensure_list, is_complex_data, is_power_of_two
 from direct.utils.asserts import assert_complex, assert_same_shape
 
-
 class FFTONNX(torch.autograd.Function):
     """
     This class is used as a simple wrapper over original FFT function. Required for ONNX conversion.
@@ -23,10 +22,11 @@ class FFTONNX(torch.autograd.Function):
 
     @staticmethod
     def symbolic(g, data, dim, centered, normalized, inverse=False):
-        return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered), inverse_i=int(inverse))
+        return g.op("IFFT" if inverse else "FFT", data, dim, centered_i=int(centered), inverse_i=int(inverse))
 
     @staticmethod
     def forward(self, data, dim, centered, normalized, inverse=False):
+        dim = tuple(dim.tolist())
         if inverse:
             return origin_ifft2(data, dim=dim, centered=centered, normalized=normalized)
         else:
@@ -184,7 +184,7 @@ def fft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFTONNX.apply(data, dim, centered, normalized)
+    return FFTONNX.apply(data, torch.tensor(dim), centered, normalized)
 
 
 def origin_ifft2(
@@ -248,7 +248,7 @@ def ifft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFTONNX.apply(data, dim, centered, normalized, True)
+    return FFTONNX.apply(data, torch.tensor(dim), centered, normalized, True)
 
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
