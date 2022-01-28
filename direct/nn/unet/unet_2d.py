@@ -14,11 +14,13 @@ from direct.data import transforms as T
 
 class InstanceNorm2dFunc(torch.autograd.Function):
     @staticmethod
-    def symbolic(g, cls, input, scale, bias):
-        return g.op("InstanceNormalization", input, scale, bias)
+    def symbolic(g, cls, input):
+        c_scale = g.op("Constant", value_t=cls.scale_one)
+        c_bias = g.op("Constant", value_t=cls.bias_zero)
+        return g.op("InstanceNormalization", input, c_scale, c_bias)
 
     @staticmethod
-    def forward(self, cls, input, scale, bias):
+    def forward(self, cls, input):
         y = cls.origin_forward(input)
         return y
 
@@ -28,15 +30,14 @@ class InstanceNorm2dONNX(nn.InstanceNorm2d):
     This is a support class which helps export network with InstanceNorm2d in ONNX format.
     """
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
+    def __init__(self, num_features):
+        super().__init__(num_features)
         self.origin_forward = super().forward
-        self.num_features = args[0]
+        self.scale_one = torch.ones(num_features)
+        self.bias_zero = torch.zeros(num_features)
 
     def forward(self, input):
-        scale = torch.ones(self.num_features)
-        bias = torch.zeros(self.num_features)
-        y = InstanceNorm2dFunc.apply(self, input, scale, bias).clone()
+        y = InstanceNorm2dFunc.apply(self, input).clone()
         return y
 
 
