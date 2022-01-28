@@ -23,7 +23,7 @@ class FFTONNX(torch.autograd.Function):
 
     @staticmethod
     def symbolic(g, data, dim, centered, normalized, inverse=False):
-        return g.op("IFFT" if inverse else "FFT", data, dim, centered_i=int(centered), inverse_i=int(inverse))
+        return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered), inverse_i=int(inverse))
 
     @staticmethod
     def forward(self, data, dim, centered, normalized, inverse=False):
@@ -185,7 +185,7 @@ def fft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFTONNX.apply(data, torch.tensor(dim), centered, normalized)
+    return FFTONNX.apply(data,  centered, normalized) #torch.tensor(dim),
 
 
 def origin_ifft2(
@@ -224,8 +224,10 @@ def origin_ifft2(
     assert_complex(data, complex_last=True)
 
     data = view_as_complex(data)
+
     if centered:
         data = ifftshift(data, dim=dim)
+
     # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
     if verify_fft_dtype_possible(data, dim):
         data = torch.fft.ifftn(
@@ -240,6 +242,7 @@ def origin_ifft2(
         data = fftshift(data, dim=dim)
 
     data = view_as_real(data)
+
     return data
 
 
@@ -249,8 +252,8 @@ def ifft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFTONNX.apply(data, torch.tensor(dim), centered, normalized, True)
 
+    return FFTONNX.apply(data, centered, normalized, True) #torch.tensor(dim)
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
     """
