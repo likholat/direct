@@ -22,16 +22,16 @@ class FFTONNX(torch.autograd.Function):
     """
 
     @staticmethod
-    def symbolic(g, data, centered, normalized, inverse=False):
+    def symbolic(g, data, dim, centered, normalized, inverse=False):
         return g.op("IFFT" if inverse else "FFT", data, centered_i=int(centered), inverse_i=int(inverse))
 
     @staticmethod
-    def forward(self, data, centered, normalized, inverse=False):
+    def forward(self, data, dim, centered, normalized, inverse=False):
         # dim = tuple(dim.tolist())
         if inverse:
-            return origin_ifft2(data, centered=centered, normalized=normalized)
+            return origin_ifft2(data, dim=dim, centered=centered, normalized=normalized)
         else:
-            return origin_fft2(data, centered=centered, normalized=normalized)
+            return origin_fft2(data, dim=dim, centered=centered, normalized=normalized)
 
 
 class ComplexMultiplicationONNX(torch.autograd.Function):
@@ -185,7 +185,7 @@ def fft2(
     centered: bool = True,
     normalized: bool = True,
 ) -> torch.Tensor:
-    return FFTONNX.apply(data, centered, normalized)  # torch.tensor(dim),
+    return FFTONNX.apply(data, dim, centered, normalized)  # torch.tensor(dim),
 
 
 def origin_ifft2(
@@ -253,7 +253,7 @@ def ifft2(
     normalized: bool = True,
 ) -> torch.Tensor:
 
-    return FFTONNX.apply(data, centered, normalized, True)  # torch.tensor(dim)
+    return FFTONNX.apply(data, dim, centered, normalized, True)  # torch.tensor(dim)
 
 
 def safe_divide(input_tensor: torch.Tensor, other_tensor: torch.Tensor) -> torch.Tensor:
