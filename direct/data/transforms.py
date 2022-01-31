@@ -226,10 +226,8 @@ def origin_ifft2(
     assert_complex(data, complex_last=True)
 
     data = view_as_complex(data)
-
     if centered:
         data = ifftshift(data, dim=dim)
-
     # Verify whether half precision and if fft is possible in this shape. Else do a typecast.
     if verify_fft_dtype_possible(data, dim):
         data = torch.fft.ifftn(
@@ -244,7 +242,6 @@ def origin_ifft2(
         data = fftshift(data, dim=dim)
 
     data = view_as_real(data)
-
     return data
 
 

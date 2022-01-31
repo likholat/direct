@@ -67,12 +67,10 @@ class ConvBlock(nn.Module):
 
         self.layers = nn.Sequential(
             nn.Conv2d(in_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            # nn.InstanceNorm2d(out_channels),
             InstanceNorm2dONNX(out_channels),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.Dropout2d(dropout_probability),
             nn.Conv2d(out_channels, out_channels, kernel_size=3, padding=1, bias=False),
-            # nn.InstanceNorm2d(out_channels),
             InstanceNorm2dONNX(out_channels),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.Dropout2d(dropout_probability),
@@ -120,7 +118,6 @@ class TransposeConvBlock(nn.Module):
 
         self.layers = nn.Sequential(
             nn.ConvTranspose2d(in_channels, out_channels, kernel_size=2, stride=2, bias=False),
-            # nn.InstanceNorm2d(out_channels),
             InstanceNorm2dONNX(out_channels),
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
         )

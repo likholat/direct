@@ -71,6 +71,5 @@ def test_unet_2d(shape, num_filters, num_pool_layers, skip, normalized):
         ov_out = ov_model(masked_kspace=data)
 
         assert torch.max(torch.abs(out[0][-1] - ov_out[0][-1])) < 1e-5
-        # assert torch.max(torch.abs(out[1] - ov_out[1])) < 1e-5
 
     assert list(out.shape) == [shape[0]] + shape[2:] + [2]
