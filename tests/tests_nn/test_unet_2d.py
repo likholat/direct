@@ -63,6 +63,8 @@ def test_unet_2d(shape, num_filters, num_pool_layers, skip, normalized):
     data = create_input(shape + [2]).cpu()
     sens = create_input(shape + [2]).cpu()
 
+    model.eval()
+
     out = model(data, sens)
 
     if openvino_available:
