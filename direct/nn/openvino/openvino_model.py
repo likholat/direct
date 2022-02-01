@@ -65,10 +65,10 @@ class OpenVINOModel(nn.Module):
             args = ["masked_kspace"]
             if self.model.image_initialization == "sense":
                 args.append("sensitivity_map")
-        if args:
-            self.input = [kwargs[k] for k in args]
         else:
             raise ValueError(f"The model is not supported by OpenVINO: {self.model.__class__}")
+
+        self.input = [kwargs[k] for k in args]
 
         convert_layer(self.model)
 
