@@ -66,7 +66,7 @@ class OpenVINOModel(nn.Module):
             if self.model.image_initialization == "sense":
                 args.append("sensitivity_map")
         else:
-            raise ValueError(f"The model is not supported by OpenVINO: {self.model.__class__}")
+            raise ValueError(f"The model is not supported by OpenVINO: {self.model_name}")
 
         self.input = [kwargs[k] for k in args]
 
